@@ -142,7 +142,7 @@ setup_service || error "Failed to set up service"
 if [ "$SYNC_MODELS" = true ]; then
     # Sync models
     log "Syncing models from remote location..."
-    rsync -avz --progress "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
+    rsync -az --info=progress2 "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
 
     # Start Exo in background with models
     log "Starting Exo with models sync..."
