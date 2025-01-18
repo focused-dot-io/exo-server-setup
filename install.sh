@@ -95,10 +95,6 @@ echo "$PYTHON_VERSION" > .python-version || error "Failed to set Python version"
 log "Installing Exo..."
 uv pip install -e . || error "Failed to install Exo"
 
-# Sync models
-log "Syncing models from remote location..."
-rsync -avz --progress "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
-
 # Set up Exo service
 setup_service() {
     log "Setting up Exo as a Homebrew service..."
@@ -144,6 +140,10 @@ EOF
 setup_service || error "Failed to set up service"
 
 if [ "$SYNC_MODELS" = true ]; then
+    # Sync models
+    log "Syncing models from remote location..."
+    rsync -avz --progress "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
+
     # Start Exo in background with models
     log "Starting Exo with models sync..."
     uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
