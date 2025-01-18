@@ -104,10 +104,10 @@ setup_service() {
     log "Setting up Exo as a Homebrew service..."
     
     # Create the formula directory
-    mkdir -p /usr/local/Homebrew/Library/Taps/focused-dot-io/homebrew-exo
+    mkdir -p /opt/homebrew/Library/Taps/focused-dot-io/homebrew-exo
     
     # Create and install the formula
-    cat > /usr/local/Homebrew/Library/Taps/focused-dot-io/homebrew-exo/exo.rb << 'EOF'
+    cat > /opt/homebrew/Library/Taps/focused-dot-io/homebrew-exo/exo.rb << 'EOF'
 class Exo < Formula
   desc "Exo server application"
   homepage "https://github.com/exo-explore/exo"
