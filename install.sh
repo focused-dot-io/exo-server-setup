@@ -12,12 +12,22 @@ readonly PYTHON_VERSION="3.12"
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2; }
 error() { log "ERROR: $*"; exit 1; }
 
-# Check for required argument
-if [ "$#" -ne 1 ]; then
-    error "Usage: $0 <remote_models_location>"
-fi
+# Handle arguments whether script is run directly or via curl
+# When script is run via curl, the arguments come after --
+REMOTE_MODELS_LOCATION=""
+for arg in "$@"; do
+    if [ "$arg" = "--" ]; then
+        continue
+    elif [ -z "$REMOTE_MODELS_LOCATION" ]; then
+        REMOTE_MODELS_LOCATION="$arg"
+    fi
+done
 
-REMOTE_MODELS_LOCATION="$1"
+# Model sync is optional
+SYNC_MODELS=false
+if [ -n "$REMOTE_MODELS_LOCATION" ]; then
+    SYNC_MODELS=true
+fi
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
@@ -88,6 +98,51 @@ uv pip install -e . || error "Failed to install Exo"
 # Sync models
 log "Syncing models from remote location..."
 rsync -avz --progress "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
+
+# Set up Exo service
+setup_service() {
+    log "Setting up Exo as a Homebrew service..."
+    
+    # Create the formula directory
+    mkdir -p /usr/local/Homebrew/Library/Taps/focused-dot-io/homebrew-exo
+    
+    # Create and install the formula
+    cat > /usr/local/Homebrew/Library/Taps/focused-dot-io/homebrew-exo/exo.rb << 'EOF'
+class Exo < Formula
+  desc "Exo server application"
+  homepage "https://github.com/exo-explore/exo"
+  version "0.1.0"
+  
+  # This is a dummy URL since we're installing from local
+  url "file:///dev/null"
+  sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+
+  def install
+    # Create necessary directories
+    (var/"log/exo").mkpath
+    (var/"exo").mkpath
+  end
+
+  service do
+    run [opt_bin/"uv", "run", "exo", "--disable-tui"]
+    keep_alive true
+    log_path var/"log/exo/exo.log"
+    error_log_path var/"log/exo/error.log"
+    working_dir var/"exo"
+  end
+end
+EOF
+
+    # Install and start the service
+    brew tap focused-dot-io/exo
+    brew install exo
+    brew services start exo
+    
+    log "Exo service setup complete. You can manage it with 'brew services'"
+}
+
+# First set up the service
+setup_service || error "Failed to set up service"
 
 # Start Exo in background
 log "Starting Exo..."

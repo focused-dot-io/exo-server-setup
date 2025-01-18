@@ -2,46 +2,25 @@
 
 An automated setup script for configuring a new Mac as an Exo server. This script handles installation of required dependencies, enables SSH access, and configures the Exo environment with model synchronization.
 
-## Prerequisites
-
-- macOS (tested on macOS Ventura and later)
-- Administrator access (sudo privileges)
-- Source machine with Exo models for synchronization
-- Internet connection for downloading dependencies
-
-## Features
-
-- Automated Homebrew installation
-- Installation of required packages:
-  - brave-browser
-  - iterm2
-  - mactop
-  - tux
-  - uv
-- SSH enablement
-- Exo installation and configuration
-- Model synchronization from a source machine
-- Automatic cleanup after model transfer
-
 ## Quick Install
 
 If you'd like to inspect the script before running it, you can view it here:
-[install.sh](https://github.com/focused/exo-server-setup/blob/main/install.sh)
+[install.sh](https://github.com/focused-dot-io/exo-server-setup/blob/main/install.sh)
 
 You can download and run the script directly using:
 
 ```bash
 # Basic installation without model sync
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused/exo-server-setup/refs/heads/main/install.sh)"
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)"
 
 # Installation with model sync
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused/exo-server-setup/refs/heads/main/install.sh)" -- <remote_models_location>
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)" -- <remote_models_location>
 ```
 
 For better security, you can download and verify the script first:
 ```bash
 # Download the script
-curl -fsSL https://raw.githubusercontent.com/focused/exo-server-setup/refs/heads/main/install.sh -o install.sh
+curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh -o install.sh
 
 # Inspect the script
 less install.sh
@@ -71,26 +50,26 @@ You can verify the script's integrity by:
 2. Inspecting the script before execution
 3. Verifying that all downloaded packages are from official sources (Homebrew)
 
-## Manual Installation
-   ```bash
-   git clone <repository-url>
-   cd <repository-name>
-   ```
+## Prerequisites
 
-2. Make the script executable:
-   ```bash
-   chmod +x setup.sh
-   ```
+- macOS (tested on macOS Ventura and later)
+- Administrator access (sudo privileges)
+- Source machine with Exo models for synchronization (optional)
+- Internet connection for downloading dependencies
 
-3. Run the script with the source models location:
-   ```bash
-   ./setup.sh <remote_models_location>
-   ```
-   
-   Example:
-   ```bash
-   ./setup.sh user@source-machine:/path/to/models/
-   ```
+## Features
+
+- Automated Homebrew installation
+- Installation of required packages:
+  - brave-browser
+  - iterm2
+  - mactop
+  - tux
+  - uv
+- SSH enablement
+- Exo installation and configuration
+- Model synchronization from a source machine (optional)
+- Automatic cleanup after model transfer
 
 ## What the Script Does
 
@@ -98,8 +77,8 @@ You can verify the script's integrity by:
 2. Installs Homebrew and required packages
 3. Creates a workspace directory
 4. Clones and installs Exo
-5. Synchronizes models from the source location
-6. Starts Exo and monitors model transfer
+5. Synchronizes models from the source location (if provided)
+6. Starts Exo and monitors model transfer (if syncing)
 7. Cleans up temporary files after successful transfer
 
 ## Error Handling
