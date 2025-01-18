@@ -186,5 +186,5 @@ log "To manage the Exo service:"
 log "  Start:  sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist"
 log "  Stop:   sudo launchctl unload /Library/LaunchDaemons/io.focused.exo.plist"
 log "  Status: sudo launchctl list | grep exo"
-log "  Logs:   tail -f /var/log/exo/exo.log"
+log "  Logs:   tail -f $HOME/.local/var/log/exo/exo.log"
 exit 0
