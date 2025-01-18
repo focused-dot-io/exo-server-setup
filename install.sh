@@ -133,8 +133,6 @@ EOF
     sudo chown -R $(whoami) /var/log/exo /var/exo
 
     # Load the service
-    sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist
-    
     log "Exo service setup complete. You can manage it with 'sudo launchctl'"
 }
 
@@ -183,4 +181,9 @@ else
 fi
 
 log "Installation complete!"
+log "To manage the Exo service:"
+log "  Start:  sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist"
+log "  Stop:   sudo launchctl unload /Library/LaunchDaemons/io.focused.exo.plist"
+log "  Status: sudo launchctl list | grep exo"
+log "  Logs:   tail -f /var/log/exo/exo.log"
 exit 0
