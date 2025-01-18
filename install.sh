@@ -76,7 +76,7 @@ fi
 # Install required packages
 log "Installing packages via Homebrew..."
 brew install --cask brave-browser iterm2 || error "Failed to install cask packages"
-brew install mactop tux uv || error "Failed to install brew packages"
+brew install mactop tmux uv || error "Failed to install brew packages"
 
 # Create and enter workspace directory
 log "Setting up workspace..."
