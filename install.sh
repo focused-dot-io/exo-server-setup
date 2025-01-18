@@ -97,43 +97,45 @@ uv pip install -e . || error "Failed to install Exo"
 
 # Set up Exo service
 setup_service() {
-    log "Setting up Exo as a Homebrew service..."
+    log "Setting up Exo as a LaunchDaemon..."
     
-    # Create the formula directory
-    mkdir -p /opt/homebrew/Library/Taps/focused-dot-io/homebrew-exo
-    
-    # Create and install the formula
-    cat > /opt/homebrew/Library/Taps/focused-dot-io/homebrew-exo/exo.rb << 'EOF'
-class Exo < Formula
-  desc "Exo server application"
-  homepage "https://github.com/exo-explore/exo"
-  version "0.1.0"
-  
-  # This is a dummy URL since we're installing from local
-  url "file:///dev/null"
-  sha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
-
-  def install
-    # Create necessary directories
-    (var/"log/exo").mkpath
-    (var/"exo").mkpath
-  end
-
-  service do
-    run [opt_bin/"uv", "run", "exo", "--disable-tui"]
-    keep_alive true
-    log_path var/"log/exo/exo.log"
-    error_log_path var/"log/exo/error.log"
-    working_dir var/"exo"
-  end
-end
+    # Create the plist file
+    sudo tee /Library/LaunchDaemons/io.focused.exo.plist > /dev/null << 'EOF'
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>io.focused.exo</string>
+    <key>ProgramArguments</key>
+    <array>
+        <string>/opt/homebrew/bin/uv</string>
+        <string>run</string>
+        <string>exo</string>
+        <string>--disable-tui</string>
+    </array>
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+    <key>WorkingDirectory</key>
+    <string>/var/exo</string>
+    <key>StandardOutPath</key>
+    <string>/var/log/exo/exo.log</string>
+    <key>StandardErrorPath</key>
+    <string>/var/log/exo/error.log</string>
+</dict>
+</plist>
 EOF
 
-    # Install and start the service
-    brew tap focused-dot-io/exo
-    brew install exo
+    # Create necessary directories
+    sudo mkdir -p /var/log/exo /var/exo
+    sudo chown -R $(whoami) /var/log/exo /var/exo
+
+    # Load the service
+    sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist
     
-    log "Exo service setup complete. You can manage it with 'brew services'"
+    log "Exo service setup complete. You can manage it with 'sudo launchctl'"
 }
 
 # First set up the service
