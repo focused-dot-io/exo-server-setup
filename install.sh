@@ -136,7 +136,6 @@ EOF
     # Install and start the service
     brew tap focused-dot-io/exo
     brew install exo
-    brew services start exo
     
     log "Exo service setup complete. You can manage it with 'brew services'"
 }
@@ -144,33 +143,42 @@ EOF
 # First set up the service
 setup_service || error "Failed to set up service"
 
-# Start Exo in background
-log "Starting Exo..."
-uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
-EXOPID=$!
+if [ "$SYNC_MODELS" = true ]; then
+    # Start Exo in background with models
+    log "Starting Exo with models sync..."
+    uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
+    EXOPID=$!
 
-# Function to check if models have been moved
-check_models_moved() {
-    # Check if the temp directory is empty (ignoring hidden files)
-    local file_count=$(find "$TEMP_DIR" -type f -not -path '*/\.*' | wc -l)
-    [ "$file_count" -eq 0 ]
-}
+    # Function to check if models have been moved
+    check_models_moved() {
+        # Check if the temp directory is empty (ignoring hidden files)
+        local file_count=$(find "$TEMP_DIR" -type f -not -path '*/\.*' | wc -l)
+        [ "$file_count" -eq 0 ]
+    }
 
-# Wait for models to load with timeout
-log "Waiting for models to load..."
-TIMEOUT=3600  # 1 hour timeout
-ELAPSED=0
-INTERVAL=10   # Check every 10 seconds
+    # Wait for models to load with timeout
+    log "Waiting for models to load..."
+    TIMEOUT=3600  # 1 hour timeout
+    ELAPSED=0
+    INTERVAL=10   # Check every 10 seconds
 
-while [ $ELAPSED -lt $TIMEOUT ]; do
-    if check_models_moved; then
-        log "Models moved successfully"
-        kill $EXOPID
-        exit 0
+    while [ $ELAPSED -lt $TIMEOUT ]; do
+        if check_models_moved; then
+            log "Models moved successfully"
+            kill $EXOPID
+            break
+        fi
+        sleep $INTERVAL
+        ELAPSED=$((ELAPSED + INTERVAL))
+    done
+
+    # If we get here and elapsed >= timeout, timeout was reached
+    if [ $ELAPSED -ge $TIMEOUT ]; then
+        error "Timeout waiting for models to load"
     fi
-    sleep $INTERVAL
-    ELAPSED=$((ELAPSED + INTERVAL))
-done
+else
+    log "No model location provided, skipping model sync"
+fi
 
-# If we get here, timeout was reached
-error "Timeout waiting for models to load"
+log "Installation complete!"
+exit 0
