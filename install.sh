@@ -146,7 +146,7 @@ setup_service || error "Failed to set up service"
 
 # Start Exo in background
 log "Starting Exo..."
-uv run exo --models-seed-dir "$TEMP_DIR" &
+uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
 EXOPID=$!
 
 # Function to check if models have been moved
