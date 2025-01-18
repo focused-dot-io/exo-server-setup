@@ -100,7 +100,7 @@ setup_service() {
     log "Setting up Exo as a LaunchDaemon..."
     
     # Create the plist file
-    sudo tee /Library/LaunchDaemons/io.focused.exo.plist > /dev/null << 'EOF'
+    sudo tee /Library/LaunchDaemons/io.focused.exo.plist > /dev/null << EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -118,22 +118,23 @@ setup_service() {
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <key>UserName</key>
+    <string>$(whoami)</string>
     <key>WorkingDirectory</key>
-    <string>/var/exo</string>
+    <string>$WORKSPACE_DIR/exo</string>
     <key>StandardOutPath</key>
-    <string>/var/log/exo/exo.log</string>
+    <string>$HOME/.local/var/log/exo/exo.log</string>
     <key>StandardErrorPath</key>
-    <string>/var/log/exo/error.log</string>
+    <string>$HOME/.local/var/log/exo/error.log</string>
 </dict>
 </plist>
 EOF
 
     # Create necessary directories
-    sudo mkdir -p /var/log/exo /var/exo
-    sudo chown -R $(whoami) /var/log/exo /var/exo
+    mkdir -p "$HOME/.local/var/log/exo"
 
     # Load the service
-    log "Exo service setup complete. You can manage it with 'sudo launchctl'"
+    sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist
 }
 
 # First set up the service
