@@ -12,6 +12,50 @@ readonly PYTHON_VERSION="3.12"
 log() { echo "[$(date +'%Y-%m-%d %H:%M:%S')] $*" >&2; }
 error() { log "ERROR: $*"; exit 1; }
 
+# Check for sudo privileges upfront
+if [ "$(id -u)" -eq 0 ]; then
+    error "Please do not run this script as root/sudo directly. Run it as a normal user, it will ask for sudo privileges."
+fi
+
+# Ask for sudo password upfront
+log "Requesting sudo privileges..."
+sudo -v || error "Failed to obtain sudo privileges"
+
+# Keep sudo privileges alive in the background
+(while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null) &
+
+# Function to request Full Disk Access
+request_full_disk_access() {
+    log "Checking and requesting Full Disk Access..."
+    
+    # Test if we already have full disk access by trying to read a protected file
+    if ls /Library/Application\ Support/com.apple.TCC/TCC.db >/dev/null 2>&1; then
+        log "Full Disk Access is already granted"
+        return 0
+    fi
+    
+    # Request Full Disk Access using tccutil
+    osascript <<EOF
+tell application "System Events"
+    activate
+    display dialog "Exo needs Full Disk Access to function properly. A permission prompt will appear next. Please click 'OK' to continue." buttons {"OK"} default button "OK"
+end tell
+EOF
+    
+    # Trigger the permission prompt
+    sudo sqlite3 /Library/Application\ Support/com.apple.TCC/TCC.db .tables >/dev/null 2>&1 || true
+    
+    # Check if access was granted
+    if ! ls /Library/Application\ Support/com.apple.TCC/TCC.db >/dev/null 2>&1; then
+        error "Full Disk Access was not granted. Please run the script again and approve the permission request."
+    fi
+    
+    log "Full Disk Access granted successfully"
+}
+
+# Request Full Disk Access first
+request_full_disk_access
+
 # Handle arguments whether script is run directly or via curl
 # When script is run via curl, the arguments come after --
 REMOTE_MODELS_LOCATION=""
@@ -138,10 +182,33 @@ EOF
 # First set up the service
 setup_service || error "Failed to set up service"
 
+# Function to perform rsync with retries
+perform_rsync_with_retry() {
+    local source="$1"
+    local dest="$2"
+    local max_attempts=3
+    local attempt=1
+    local wait_time=10
+
+    while [ $attempt -le $max_attempts ]; do
+        log "Rsync attempt $attempt of $max_attempts..."
+        if rsync -az --partial --progress --timeout=60 "$source" "$dest"; then
+            return 0
+        fi
+        log "Rsync attempt $attempt failed. Waiting $wait_time seconds before retry..."
+        sleep $wait_time
+        wait_time=$((wait_time * 2))
+        attempt=$((attempt + 1))
+    done
+    return 1
+}
+
 if [ "$SYNC_MODELS" = true ]; then
     # Sync models
     log "Syncing models from remote location..."
-    rsync -az "$REMOTE_MODELS_LOCATION" "$TEMP_DIR" || error "Failed to sync models"
+    if ! perform_rsync_with_retry "$REMOTE_MODELS_LOCATION" "$TEMP_DIR"; then
+        error "Failed to sync models after multiple attempts"
+    fi
 
     # Start Exo in background with models
     log "Starting Exo with models sync..."

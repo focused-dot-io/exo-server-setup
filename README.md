@@ -2,6 +2,14 @@
 
 An automated setup script for configuring a new Mac as an Exo server. This script handles installation of required dependencies, enables SSH access, and configures the Exo environment with model synchronization.
 
+## Prerequisites
+
+- macOS (tested on macOS Ventura and later)
+- Administrator access (sudo privileges)
+- Full Disk Access (you'll be prompted to grant this during installation)
+- Source machine with Exo models for synchronization (optional)
+- Internet connection for downloading dependencies
+
 ## Quick Install
 
 If you'd like to inspect the script before running it, you can view it here:
@@ -12,12 +20,12 @@ You can download and run the script directly using:
 ```bash
 # Basic installation without model sync
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)"
-```
 
-```bash
 # Installation with model sync
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)" -- <remote_models_location>
 ```
+
+Note: The script will automatically request Full Disk Access permission via a system prompt. Simply approve the request when it appears.
 
 For better security, you can download and verify the script first:
 ```bash
@@ -45,15 +53,9 @@ Example with model sync:
 - The script has built-in error handling and cleanup procedures
 - No sensitive data is collected or transmitted
 
-## Prerequisites
-
-- macOS (tested on macOS Ventura and later)
-- Administrator access (sudo privileges)
-- Source machine with Exo models for synchronization (optional)
-- Internet connection for downloading dependencies
-
 ## Features
 
+- Automated Full Disk Access request and verification
 - Automated Homebrew installation
 - Installation of required packages:
   - brave-browser
@@ -69,13 +71,14 @@ Example with model sync:
 
 ## What the Script Does
 
-1. Enables SSH access for remote management
-2. Installs Homebrew and required packages
-3. Creates a workspace directory
-4. Clones and installs Exo
-5. Sets up Exo as a LaunchDaemon for automatic startup
-6. Synchronizes models from the source location (if provided)
-7. Cleans up temporary files after successful transfer
+1. Checks and requests Full Disk Access if needed
+2. Enables SSH access for remote management
+3. Installs Homebrew and required packages
+4. Creates a workspace directory
+5. Clones and installs Exo
+6. Sets up Exo as a LaunchDaemon for automatic startup
+7. Synchronizes models from the source location (if provided)
+8. Cleans up temporary files after successful transfer
 
 ## Service Management
 
