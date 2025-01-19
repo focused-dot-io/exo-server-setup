@@ -192,7 +192,7 @@ perform_rsync_with_retry() {
 
     while [ $attempt -le $max_attempts ]; do
         log "Rsync attempt $attempt of $max_attempts..."
-        if rsync -az --partial --progress --timeout=60 "$source" "$dest"; then
+        if rsync -a --partial --progress --timeout=60 "$source" "$dest"; then
             return 0
         fi
         log "Rsync attempt $attempt failed. Waiting $wait_time seconds before retry..."
