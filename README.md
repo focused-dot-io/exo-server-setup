@@ -12,7 +12,9 @@ You can download and run the script directly using:
 ```bash
 # Basic installation without model sync
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)"
+```
 
+```bash
 # Installation with model sync
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/focused-dot-io/exo-server-setup/refs/heads/main/install.sh)" -- <remote_models_location>
 ```
