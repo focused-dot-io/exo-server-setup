@@ -43,13 +43,6 @@ Example with model sync:
 - The script has built-in error handling and cleanup procedures
 - No sensitive data is collected or transmitted
 
-### Verification
-
-You can verify the script's integrity by:
-1. Checking the GitHub repository directly
-2. Inspecting the script before execution
-3. Verifying that all downloaded packages are from official sources (Homebrew)
-
 ## Prerequisites
 
 - macOS (tested on macOS Ventura and later)
@@ -64,10 +57,11 @@ You can verify the script's integrity by:
   - brave-browser
   - iterm2
   - mactop
-  - tux
+  - tmux
   - uv
 - SSH enablement
 - Exo installation and configuration
+- LaunchDaemon setup for automatic startup
 - Model synchronization from a source machine (optional)
 - Automatic cleanup after model transfer
 
@@ -77,9 +71,27 @@ You can verify the script's integrity by:
 2. Installs Homebrew and required packages
 3. Creates a workspace directory
 4. Clones and installs Exo
-5. Synchronizes models from the source location (if provided)
-6. Starts Exo and monitors model transfer (if syncing)
+5. Sets up Exo as a LaunchDaemon for automatic startup
+6. Synchronizes models from the source location (if provided)
 7. Cleans up temporary files after successful transfer
+
+## Service Management
+
+The script sets up Exo as a LaunchDaemon. You can manage it using:
+
+```bash
+# Start the service
+sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist
+
+# Stop the service
+sudo launchctl unload /Library/LaunchDaemons/io.focused.exo.plist
+
+# Check status
+sudo launchctl list | grep exo
+
+# View logs
+tail -f ~/.local/var/log/exo/exo.log
+```
 
 ## Error Handling
 
@@ -105,6 +117,11 @@ If you encounter issues:
    - Verify source location is accessible
    - Check network connectivity
    - Ensure sufficient disk space
+
+4. **Service Issues**:
+   - Check the log files at ~/.local/var/log/exo/
+   - Verify the service status using launchctl
+   - Ensure proper permissions on the workspace directory
 
 ## Contributing
 

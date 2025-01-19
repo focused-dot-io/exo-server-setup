@@ -93,6 +93,7 @@ cd exo || error "Failed to enter Exo directory"
 echo "$PYTHON_VERSION" > .python-version || error "Failed to set Python version"
 
 log "Installing Exo..."
+uv venv
 uv pip install -e . || error "Failed to install Exo"
 
 # Set up Exo service
@@ -132,9 +133,6 @@ EOF
 
     # Create necessary directories
     mkdir -p "$HOME/.local/var/log/exo"
-
-    # Load the service
-    sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist
 }
 
 # First set up the service
@@ -181,10 +179,10 @@ else
     log "No model location provided, skipping model sync"
 fi
 
-log "Installation complete!"
-log "To manage the Exo service:"
-log "  Start:  sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist"
-log "  Stop:   sudo launchctl unload /Library/LaunchDaemons/io.focused.exo.plist"
-log "  Status: sudo launchctl list | grep exo"
-log "  Logs:   tail -f $HOME/.local/var/log/exo/exo.log"
+echo "Installation complete!"
+echo "To manage the Exo service:"
+echo "  Start:  sudo launchctl load /Library/LaunchDaemons/io.focused.exo.plist"
+echo "  Stop:   sudo launchctl unload /Library/LaunchDaemons/io.focused.exo.plist"
+echo "  Status: sudo launchctl list | grep exo"
+echo "  Logs:   tail -f $HOME/.local/var/log/exo/exo.log"
 exit 0
