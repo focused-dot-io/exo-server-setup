@@ -122,6 +122,48 @@ log "Installing packages via Homebrew..."
 brew install --cask brave-browser iterm2 || error "Failed to install cask packages"
 brew install mactop tmux uv || error "Failed to install brew packages"
 
+# Configure power management and screen settings
+configure_power_settings() {
+    log "Configuring power management and screen settings..."
+
+    # Disable screen saver
+    defaults -currentHost write com.apple.screensaver idleTime 0
+
+    # Prevent display from sleeping
+    sudo pmset -a displaysleep 0
+
+    # Disable screen lock
+    defaults write com.apple.screensaver askForPassword -int 0
+
+    # Disable automatic screen lock after sleep/screensaver
+    defaults write com.apple.screensaver askForPasswordDelay -int 0
+
+    log "Power management and screen settings configured"
+}
+
+# Configure automatic login
+configure_autologin() {
+    local current_user=$(whoami)
+    log "Configuring automatic login for user: $current_user"
+
+    # Enable automatic login in system preferences
+    sudo defaults write /Library/Preferences/com.apple.loginwindow autoLoginUser "$current_user"
+
+    # Disable FileVault if enabled (required for autologin)
+    if fdesetup isactive >/dev/null 2>&1; then
+        log "FileVault is enabled. Disabling for automatic login..."
+        sudo fdesetup disable || error "Failed to disable FileVault"
+    fi
+
+    # Disable login password requiremen
+    sudo defaults write /Library/Preferences/com.apple.loginwindow SHOWFULLNAME -bool false
+
+    log "Automatic login configured successfully"
+}
+
+configure_power_settings || error "Failed to configure power settings"
+configure_autologin || error "Failed to configure automatic login"
+
 # Create and enter workspace directory
 log "Setting up workspace..."
 mkdir -p "$WORKSPACE_DIR" || error "Failed to create workspace directory"
@@ -214,11 +256,12 @@ if [ "$SYNC_MODELS" = true ]; then
     log "Starting Exo with models sync..."
     uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
     EXOPID=$!
+    trap "kill $EXOPID" EXIT
 
     # Function to check if models have been moved
     check_models_moved() {
         # Check if the temp directory is empty (ignoring hidden files)
-        local file_count=$(find "$TEMP_DIR" -type f -not -path '*/\.*' | wc -l)
+        local file_count=$(find "$TEMP_DIR" -type f -not -path '*/\.*' | wc -l | tr -d '[:space:]')
         [ "$file_count" -eq 0 ]
     }
 
