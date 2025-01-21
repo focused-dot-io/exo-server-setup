@@ -62,51 +62,6 @@ check_command() {
     command -v "$1" >/dev/null 2>&1 || error "Required command '$1' not found"
 }
 
-# Function to get Thunderbolt bridge IP for a hostname
-get_thunderbolt_ip() {
-    local hostname="$1"
-    local tb_ip
-
-    # First resolve the hostname to all IPs
-    local all_ips=$(dig +short "$hostname")
-
-    # Check if any of the IPs are on the Thunderbolt bridge interface
-    for ip in $all_ips; do
-        # Get the interface for this IP using route get
-        if route get "$ip" 2>/dev/null | grep -q "interface: bridge"; then
-            tb_ip="$ip"
-            break
-        fi
-    done
-
-    # If we found a Thunderbolt bridge IP, return it
-    if [ -n "$tb_ip" ]; then
-        echo "$tb_ip"
-        return 0
-    fi
-
-    # If no Thunderbolt bridge IP found, return the original hostname
-    echo "$hostname"
-    return 1
-}
-
-# Function to get the best available address
-resolve_best_address() {
-    local target="$1"
-    local tb_ip
-
-    # Try to get Thunderbolt bridge IP
-    tb_ip=$(get_thunderbolt_ip "$target")
-
-    # If we got a Thunderbolt bridge IP (function returned 0), use it
-    if [ $? -eq 0 ]; then
-        echo "$tb_ip"
-    else
-        # Otherwise return the original target
-        echo "$target"
-    fi
-}
-
 # Enable SSH
 enable_ssh() {
     log "Enabling SSH..."
@@ -263,8 +218,7 @@ perform_rsync_with_retry() {
     if [[ "$source" == *":"* ]]; then
         local host="${source%%:*}"
         local path="${source#*:}"
-        local resolved_host=$(resolve_best_address "$host")
-        source="${resolved_host}:${path}"
+        source="${host}:${path}"
     fi
 
     while [ $attempt -le $max_attempts ]; do
