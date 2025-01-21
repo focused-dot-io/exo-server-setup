@@ -254,37 +254,7 @@ if [ "$SYNC_MODELS" = true ]; then
 
     # Start Exo in background with models
     log "Starting Exo with models sync..."
-    uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui > /tmp/exo.log 2>&1 &
-    EXOPID=$!
-    trap "kill $EXOPID" EXIT
-
-    # Function to check if models have been moved
-    check_models_moved() {
-        # Check if the temp directory is empty (ignoring hidden files)
-        local file_count=$(find "$TEMP_DIR" -type f -not -path '*/\.*' | wc -l | tr -d '[:space:]')
-        [ "$file_count" -eq 0 ]
-    }
-
-    # Wait for models to load with timeout
-    log "Waiting for models to load..."
-    TIMEOUT=3600  # 1 hour timeout
-    ELAPSED=0
-    INTERVAL=10   # Check every 10 seconds
-
-    while [ $ELAPSED -lt $TIMEOUT ]; do
-        if check_models_moved; then
-            log "Models moved successfully"
-            kill $EXOPID
-            break
-        fi
-        sleep $INTERVAL
-        ELAPSED=$((ELAPSED + INTERVAL))
-    done
-
-    # If we get here and elapsed >= timeout, timeout was reached
-    if [ $ELAPSED -ge $TIMEOUT ]; then
-        error "Timeout waiting for models to load"
-    fi
+    uv run exo --models-seed-dir "$TEMP_DIR" --disable-tui --prompt "Say 'Models Moved' Nothing else."
 else
     log "No model location provided, skipping model sync"
 fi
