@@ -57,7 +57,57 @@ fi
 TEMP_DIR=$(mktemp -d)
 trap 'rm -rf "$TEMP_DIR"' EXIT
 
-# Function to enable SSH
+# Function to check command existence
+check_command() {
+    command -v "$1" >/dev/null 2>&1 || error "Required command '$1' not found"
+}
+
+# Function to get Thunderbolt bridge IP for a hostname
+get_thunderbolt_ip() {
+    local hostname="$1"
+    local tb_ip
+
+    # First resolve the hostname to all IPs
+    local all_ips=$(dig +short "$hostname")
+
+    # Check if any of the IPs are on the Thunderbolt bridge interface
+    for ip in $all_ips; do
+        # Get the interface for this IP using route get
+        if route get "$ip" 2>/dev/null | grep -q "interface: bridge"; then
+            tb_ip="$ip"
+            break
+        fi
+    done
+
+    # If we found a Thunderbolt bridge IP, return it
+    if [ -n "$tb_ip" ]; then
+        echo "$tb_ip"
+        return 0
+    fi
+
+    # If no Thunderbolt bridge IP found, return the original hostname
+    echo "$hostname"
+    return 1
+}
+
+# Function to get the best available address
+resolve_best_address() {
+    local target="$1"
+    local tb_ip
+
+    # Try to get Thunderbolt bridge IP
+    tb_ip=$(get_thunderbolt_ip "$target")
+
+    # If we got a Thunderbolt bridge IP (function returned 0), use it
+    if [ $? -eq 0 ]; then
+        echo "$tb_ip"
+    else
+        # Otherwise return the original target
+        echo "$target"
+    fi
+}
+
+# Enable SSH
 enable_ssh() {
     log "Enabling SSH..."
     # Check if SSH is already enabled
@@ -65,21 +115,16 @@ enable_ssh() {
         log "SSH is already enabled"
         return 0
     fi
-    
+
     # Enable SSH
     sudo systemsetup -setremotelogin on || error "Failed to enable SSH"
-    
+
     # Verify SSH is running
     if ! sudo systemsetup -getremotelogin | grep -q "On"; then
         error "Failed to verify SSH is enabled"
     fi
-    
-    log "SSH enabled successfully"
-}
 
-# Function to check command existence
-check_command() {
-    command -v "$1" >/dev/null 2>&1 || error "Required command '$1' not found"
+    log "SSH enabled successfully"
 }
 
 # Enable SSH
@@ -94,7 +139,7 @@ check_command rsync
 if ! command -v brew >/dev/null 2>&1; then
     log "Installing Homebrew..."
     NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" || error "Failed to install Homebrew"
-    
+
     # Add Homebrew to PATH for the current session
     eval "$(/opt/homebrew/bin/brew shellenv)"
 fi
@@ -167,7 +212,7 @@ uv pip install -e . || error "Failed to install Exo"
 # Set up Exo service
 setup_service() {
     log "Setting up Exo as a LaunchDaemon..."
-    
+
     # Create the plist file
     sudo tee /Library/LaunchDaemons/io.focused.exo.plist > /dev/null << EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -213,6 +258,14 @@ perform_rsync_with_retry() {
     local max_attempts=3
     local attempt=1
     local wait_time=10
+
+    # If source contains a colon, it's a remote path - resolve the hostname
+    if [[ "$source" == *":"* ]]; then
+        local host="${source%%:*}"
+        local path="${source#*:}"
+        local resolved_host=$(resolve_best_address "$host")
+        source="${resolved_host}:${path}"
+    fi
 
     while [ $attempt -le $max_attempts ]; do
         log "Rsync attempt $attempt of $max_attempts..."
