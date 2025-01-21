@@ -26,31 +26,13 @@ sudo -v || error "Failed to obtain sudo privileges"
 
 # Function to request Full Disk Access
 request_full_disk_access() {
-    log "Checking and requesting Full Disk Access..."
-    
-    # Test if we already have full disk access by trying to read a protected file
-    if ls /Library/Application\ Support/com.apple.TCC/TCC.db >/dev/null 2>&1; then
-        log "Full Disk Access is already granted"
-        return 0
-    fi
-    
-    # Request Full Disk Access using tccutil
-    osascript <<EOF
-tell application "System Events"
-    activate
-    display dialog "Exo needs Full Disk Access to function properly. A permission prompt will appear next. Please click 'OK' to continue." buttons {"OK"} default button "OK"
-end tell
-EOF
-    
-    # Trigger the permission prompt
-    sudo sqlite3 /Library/Application\ Support/com.apple.TCC/TCC.db .tables >/dev/null 2>&1 || true
-    
-    # Check if access was granted
-    if ! ls /Library/Application\ Support/com.apple.TCC/TCC.db >/dev/null 2>&1; then
-        error "Full Disk Access was not granted. Please run the script again and approve the permission request."
-    fi
-    
-    log "Full Disk Access granted successfully"
+    echo "This script requires Full Disk Access to function correctly."
+    echo "Please follow these steps to grant Full Disk Access:"
+    echo "1. Open System Settings."
+    echo "2. Go to 'Privacy & Security' -> 'Full Disk Access'."
+    echo "3. Click the '+' button and add 'Terminal' or your preferred shell environment."
+    echo "4. Restart the Terminal application to apply the changes."
+    read -p "Press [Enter] after completing these steps to continue..."
 }
 
 # Request Full Disk Access first
